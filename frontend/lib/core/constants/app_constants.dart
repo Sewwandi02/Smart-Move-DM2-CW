@@ -6,7 +6,4 @@ class AppConstants {
 
   // Shared backend route prefix used when building API URLs.
   static const apiPrefix = '/api/v1';
-
-  // Flag used during development to switch the app into mock-data mode.
-  static const mockMode = true;
 }

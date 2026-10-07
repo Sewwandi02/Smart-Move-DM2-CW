@@ -1,14 +1,29 @@
-// Verifies the mock vehicle repository behaves like the application expects.
-// This ensures filtering and persistence logic continue to work as the data layer evolves.
+// Verifies vehicle JSON mapping between the app and backend.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smartmove/models/entities.dart';
-import 'package:smartmove/repositories/vehicle_repository.dart';
-
 void main() {
-  test('mock vehicle repository filters and persists records', () async {
-    final repository = MockVehicleRepository();
-    expect((await repository.list(search: 'Volvo')).single.model, 'Volvo 9700');
-    await repository.save(const Vehicle(id: 'SM-100', plateNumber: 'SM-100', model: 'Iveco', capacity: 22, status: VehicleStatus.active));
-    expect((await repository.list()).length, 3);
+  test('vehicle JSON maps Oracle API fields and statuses', () {
+    final vehicle = Vehicle.fromJson({
+      'id': 42,
+      'regNo': 'SM-042',
+      'vehicleType': 'Volvo 9700',
+      'capacity': 48,
+      'status': 'Available',
+      'adminId': 7,
+    });
+
+    expect(vehicle.id, '42');
+    expect(vehicle.plateNumber, 'SM-042');
+    expect(vehicle.model, 'Volvo 9700');
+    expect(vehicle.capacity, 48);
+    expect(vehicle.status, VehicleStatus.active);
+    expect(vehicle.adminId, 7);
+    expect(vehicle.toJson(), {
+      'regNo': 'SM-042',
+      'vehicleType': 'Volvo 9700',
+      'capacity': 48,
+      'status': 'Available',
+      'adminId': 7,
+    });
   });
 }

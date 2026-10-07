@@ -3,6 +3,7 @@ package com.smartmove.vehicle;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,17 +38,20 @@ public class VehicleController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Vehicle> create(@Valid @RequestBody VehicleRequest request) {
         Vehicle created = vehicles.create(request);
         return ResponseEntity.created(URI.create("/api/v1/vehicles/" + created.getId())).body(created);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Vehicle update(@PathVariable Long id, @Valid @RequestBody VehicleRequest request) {
         return vehicles.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         vehicles.delete(id);
         return ResponseEntity.noContent().build();
