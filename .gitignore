@@ -4,6 +4,8 @@
 *.pyc
 *.swp
 .DS_Store
+Thumbs.db
+Desktop.ini
 .atom/
 .build/
 .buildlog/
@@ -32,6 +34,8 @@ migrate_working_dir/
 .pub/
 **/build/
 **/target/
+**/node_modules/
+**/dist/
 /coverage/
 
 # Symbolication related
@@ -53,6 +57,14 @@ app.*.map.json
 **/.env
 **/.env.*
 !.env.example
+!**/.env.example
+
+# Oracle exports, trace files, and wallet credentials
+*.dmp
+*.trc
+*.aud
+*.p12
+*.sso
 
 # Widget Preview related
 .widget_preview/

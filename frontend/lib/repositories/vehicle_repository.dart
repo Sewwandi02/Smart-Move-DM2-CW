@@ -1,6 +1,5 @@
 // Repository for vehicle data access.
-// It defines the contract for retrieving and mutating vehicles while providing a
-// mock implementation for local development and a placeholder for real API use.
+import '../core/network/api_client.dart';
 import '../models/entities.dart';
 
 // Abstract contract for all vehicle data sources.
@@ -10,38 +9,53 @@ abstract class VehicleRepository {
   Future<void> delete(String id);
 }
 
-// In-memory vehicle repository used for local testing and demo screens.
-class MockVehicleRepository implements VehicleRepository {
-  final List<Vehicle> _items = [
-    const Vehicle(id: 'SM-042', plateNumber: 'SM-042', model: 'Volvo 9700', capacity: 48, status: VehicleStatus.active),
-    const Vehicle(id: 'SM-018', plateNumber: 'SM-018', model: 'Mercedes Sprinter', capacity: 16, status: VehicleStatus.maintenance),
-  ];
+class ApiVehicleRepository implements VehicleRepository {
+  ApiVehicleRepository(this._client);
+
+  final ApiClient _client;
 
   @override
-  Future<List<Vehicle>> list({String? search}) async =>
-      search == null || search.isEmpty
-          ? List.unmodifiable(_items)
-          : _items.where((item) => item.model.toLowerCase().contains(search.toLowerCase())).toList();
-
-  @override
-  Future<Vehicle> save(Vehicle vehicle) async {
-    _items.removeWhere((item) => item.id == vehicle.id);
-    _items.add(vehicle);
-    return vehicle;
+  Future<List<Vehicle>> list({String? search}) async {
+    final response = await _client.dio.get<List<dynamic>>(
+      '/vehicles',
+      queryParameters: {
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      },
+    );
+    final items = response.data;
+    if (items == null) {
+      throw const FormatException('Vehicle list response was empty.');
+    }
+    return items
+        .map((item) => Vehicle.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
   }
 
   @override
-  Future<void> delete(String id) async => _items.removeWhere((item) => item.id == id);
-}
+  Future<Vehicle> save(Vehicle vehicle) async {
+    final id = int.tryParse(vehicle.id);
+    final response = id == null
+        ? await _client.dio.post<Map<String, dynamic>>(
+            '/vehicles',
+            data: vehicle.toJson(),
+          )
+        : await _client.dio.put<Map<String, dynamic>>(
+            '/vehicles/$id',
+            data: vehicle.toJson(),
+          );
+    final data = response.data;
+    if (data == null) {
+      throw const FormatException('Vehicle save response was empty.');
+    }
+    return Vehicle.fromJson(data);
+  }
 
-// Placeholder repository for connecting to the live backend using ApiClient.
-class ApiVehicleRepository implements VehicleRepository {
   @override
-  Future<List<Vehicle>> list({String? search}) async => throw UnimplementedError('Connect GET /vehicles through ApiClient');
-
-  @override
-  Future<Vehicle> save(Vehicle vehicle) async => throw UnimplementedError('Connect POST/PUT /vehicles through ApiClient');
-
-  @override
-  Future<void> delete(String id) async => throw UnimplementedError('Connect DELETE /vehicles/{id} through ApiClient');
+  Future<void> delete(String id) async {
+    final numericId = int.tryParse(id);
+    if (numericId == null) {
+      throw ArgumentError.value(id, 'id', 'Must be a numeric Oracle vehicle ID.');
+    }
+    await _client.dio.delete<void>('/vehicles/$numericId');
+  }
 }

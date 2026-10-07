@@ -6,13 +6,44 @@ enum TripStatus { scheduled, ongoing, completed, cancelled }
 
 // Represents a vehicle in the fleet and its operational state.
 class Vehicle {
-  const Vehicle({required this.id, required this.plateNumber, required this.model, required this.capacity, required this.status});
+  const Vehicle({required this.id, required this.plateNumber, required this.model, required this.capacity, required this.status, this.adminId});
 
   final String id;
   final String plateNumber;
   final String model;
   final int capacity;
   final VehicleStatus status;
+  final int? adminId;
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    final rawStatus = json['status']?.toString().toLowerCase();
+    final status = switch (rawStatus) {
+      'available' || 'active' => VehicleStatus.active,
+      'maintenance' => VehicleStatus.maintenance,
+      'retired' => VehicleStatus.retired,
+      _ => throw FormatException('Unknown vehicle status: $rawStatus'),
+    };
+    return Vehicle(
+      id: json['id'].toString(),
+      plateNumber: json['regNo'] as String,
+      model: json['vehicleType'] as String,
+      capacity: (json['capacity'] as num).toInt(),
+      status: status,
+      adminId: (json['adminId'] as num?)?.toInt(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'regNo': plateNumber,
+        'vehicleType': model,
+        'capacity': capacity,
+        'status': switch (status) {
+          VehicleStatus.active => 'Available',
+          VehicleStatus.maintenance => 'Maintenance',
+          VehicleStatus.retired => 'Retired',
+        },
+        'adminId': adminId,
+      };
 }
 
 // Represents a route between two locations, including its stops and fare.
